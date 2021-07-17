@@ -8,10 +8,10 @@ const app = next({ dev });
 const handle = app.getRequestHandler();
 const firebaseAdmin = require("firebase-admin");
 
-var bodyParser = require("body-parser");
-
 app.prepare().then(() => {
   const server = express();
+
+  server.use(express.json());
 
   const admin = firebaseAdmin.initializeApp({
     credential: firebaseAdmin.credential.cert({
@@ -105,16 +105,15 @@ app.prepare().then(() => {
 
   server.post("/addBook", async (req, res) => {
     const body = req.body;
-    console.log(body);
 
-    // const bookStructure = {
-    //   title: body.title,
-    //   author: body.author,
-    //   isbn: body.isbn,
-    // };
+    const bookStructure = {
+      title: body.title,
+      author: body.author,
+      isbn: body.isbn,
+    };
 
-    // const db = admin.firestore();
-    // await db.collection("books").doc(uuid.v4()).set(bookStructure);
+    const db = admin.firestore();
+    await db.collection("books").doc(uuid.v4()).set(bookStructure);
 
     res.status(200).json({
       status: "done",
