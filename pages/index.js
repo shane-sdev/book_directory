@@ -73,10 +73,13 @@ export default function Home() {
 
   const clearAllBooks = async () => {
     setListOfBooks([]);
+    setIndividualBook(null);
   };
 
+  //onChange={(e) => handleInputChange(e) } --alt
   const handleInputChange = async (e) => {
     const value = e.target.value;
+    console.log(e.target);
 
     if (value === "" && errorFetching) {
       setErrorFetching(false);
@@ -111,6 +114,7 @@ export default function Home() {
         <button onClick={fetchAllBooks}>Get All Books</button>
         <button onClick={clearAllBooks}>Clear list</button>
         {individualBook !== null && (
+          //js
           <>
             <p>{individualBook.title}</p>
             <p>{individualBook.author}</p>
@@ -120,11 +124,13 @@ export default function Home() {
         {listOfBooks.length > 0 && (
           <>
             <p> List of books</p>
-            {listOfBooks.map((item, index) => {
+            {listOfBooks.map((item, index, isbn) => {
               return (
                 <p key={index}>
                   {index + 1}
                   {". "}
+                  {item.isbn}
+                  {" | "}
                   {item.title}
                 </p>
               );
