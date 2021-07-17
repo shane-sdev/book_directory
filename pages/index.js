@@ -5,41 +5,88 @@ import { useUser } from "../context/userContext";
 import firebase from "../firebase/clientApp";
 
 export default function Home() {
-  // Our custom hook to get context values
-  const { loadingUser, user } = useUser();
-  const profile = { username: "nextjs_user", message: "Awesome!!" };
-
-  const [gt, getTitle] = useState("");
-  const [ga, getAuthor] = useState("");
-  const [gi, getISBN] = useState("");
-
-  useEffect(() => {
-    if (!loadingUser) {
-      // You know that the user is loaded: either logged in or out!
-      console.log(user);
-    }
-    // You also have your firebase app initialized
-    console.log(firebase);
-  }, [loadingUser, user]);
-
-  // const createUser = async () => {
-  //   const db = firebase.firestore();
-  //   await db.collection("profile").doc(profile.username).set(profile);
-  //   alert("User created!!");
-  // };
+  const [isbnInput, setIsbnInput] = useState("");
+  const [individualBook, setIndividualBook] = useState(null);
+  const [errorFetching, setErrorFetching] = useState(false);
+  const [listOfBooks, setListOfBooks] = useState([]);
 
   //fetch book module
   const fetchBooks = async () => {
     const db = firebase.firestore();
-    const results = await db
-      .collection("books")
-      .doc("ZbjY4c7uG79ZdZAx2N7V")
-      .get();
-    getTitle(results.data().title);
-    getAuthor(results.data().author);
-    getISBN(results.data().isbn);
+    const results = await db.collection("books").doc(isbnInput).get();
 
-    //alert(results.data().title);
+    if (results.exists) {
+      const data = results.data();
+
+      setErrorFetching(false);
+      setIndividualBook(data);
+
+      // deconstructed object
+      // const { title, author, isbn } = data;
+    } else {
+      setErrorFetching(true);
+      setIndividualBook(null);
+    }
+  };
+
+  const getSpecificBook = async () => {
+    const db = firebase.firestore();
+    const allBooksCollection = await db.collection("books").get();
+
+    const data = [];
+
+    allBooksCollection.forEach((item) => {
+      if (item.exists) {
+        const { isbn } = item.data();
+
+        if (isbn === isbnInput) {
+          data.push({
+            ...item.data(),
+          });
+        }
+      }
+    });
+
+    if (data.length > 0) {
+      setIndividualBook(data[0]);
+    } else {
+      setIndividualBook(null);
+    }
+  };
+
+  const fetchAllBooks = async () => {
+    const db = firebase.firestore();
+    const allBooksCollection = await db.collection("books").get();
+
+    const data = [];
+
+    allBooksCollection.forEach((item) => {
+      if (item.exists) {
+        data.push({
+          ...item.data(),
+        });
+      }
+    });
+
+    setListOfBooks(data);
+  };
+
+  const clearAllBooks = async () => {
+    setListOfBooks([]);
+  };
+
+  const handleInputChange = async (e) => {
+    const value = e.target.value;
+
+    if (value === "" && errorFetching) {
+      setErrorFetching(false);
+    }
+
+    setIsbnInput(value);
+  };
+
+  const handleSubmit = () => {
+    getSpecificBook();
   };
 
   return (
@@ -52,20 +99,39 @@ export default function Home() {
       <main>
         <h1 className="title">Book Directory</h1>
         <p className="description">Enter ISBN to lookup for the book</p>
-        <form>
-          <input type="text"></input>
-        </form>
-        <button onClick={fetchBooks}>Get Books Information</button>
-        <p>{gt}</p>
-        <p>{ga}</p>
-        <p>{gi}</p>
-
-        <p className="description">
-          Please use the link below for admin access
-        </p>
-        <Link href={`/profile/${profile.username}`} passHref>
-          <a>Go to admin page</a>
-        </Link>
+        <div>
+          <input
+            id="isbn-title"
+            type="text"
+            onChange={handleInputChange}
+            value={isbnInput}
+          />
+        </div>
+        <button onClick={handleSubmit}>Get Books Information</button>
+        <button onClick={fetchAllBooks}>Get All Books</button>
+        <button onClick={clearAllBooks}>Clear list</button>
+        {individualBook !== null && (
+          <>
+            <p>{individualBook.title}</p>
+            <p>{individualBook.author}</p>
+            <p>{individualBook.isbn}</p>
+          </>
+        )}
+        {listOfBooks.length > 0 && (
+          <>
+            <p> List of books</p>
+            {listOfBooks.map((item, index) => {
+              return (
+                <p key={index}>
+                  {index + 1}
+                  {". "}
+                  {item.title}
+                </p>
+              );
+            })}
+          </>
+        )}
+        {errorFetching && <p>There is an issue</p>}
       </main>
 
       <style jsx>{`

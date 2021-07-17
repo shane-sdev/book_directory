@@ -5,13 +5,13 @@ import { getBooks } from "../fetchData/getBookData";
 
 // Custom App to wrap it with context provider
 export default function App({ Component, pageProps }) {
-  useEffect(() => {
-    const init = async () => {
-      const response = await getBooks();
-      console.log(response);
-    };
-    init();
-  }, []);
+  // useEffect(() => {
+  //   const init = async () => {
+  //     const response = await getBooks();
+  //     console.log(response);
+  //   };
+  //   init();
+  // }, []);
 
   return (
     <UserProvider>
