@@ -37,11 +37,11 @@ export default function Home() {
 
     allBooksCollection.forEach((item) => {
       if (item.exists) {
-        const { isbn } = item.data();
+        const result = item.data();
 
-        if (isbn === isbnInput) {
+        if (result.isbn === isbnInput) {
           data.push({
-            ...item.data(),
+            ...result,
           });
         }
       }
