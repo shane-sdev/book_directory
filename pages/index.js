@@ -2,16 +2,24 @@ import Head from "next/head";
 import { useState } from "react";
 import firebase from "../firebase/clientApp";
 
+import { v4 as uuidv4 } from "uuid";
+
 export default function Home() {
   const [isbnInput, setIsbnInput] = useState("");
   const [individualBook, setIndividualBook] = useState(null);
   const [errorFetching, setErrorFetching] = useState(false);
   const [listOfBooks, setListOfBooks] = useState([]);
 
+  // authentication
   const [username, setUsername] = useState("");
   const [password, setUPassword] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
   const [errorAuthentication, setErrorAuthentication] = useState(false);
+
+  // add new book
+  const [newBookTitle, setNewBookTitle] = useState("");
+  const [newBookAuthor, setNewBookAuthor] = useState("");
+  const [newBookIsbn, setNewBookIsbn] = useState("");
 
   const authenticateUser = async () => {
     const db = firebase.firestore();
@@ -124,6 +132,36 @@ export default function Home() {
     getSpecificBook();
   };
 
+  const handleNewTitleInputChange = async (e) => {
+    const value = e.target.value;
+
+    setNewBookTitle(value);
+  };
+
+  const handleNewAuthorInputChange = async (e) => {
+    const value = e.target.value;
+
+    setNewBookAuthor(value);
+  };
+
+  const handleNewIsbnInputChange = async (e) => {
+    const value = e.target.value;
+
+    setNewBookIsbn(value);
+  };
+
+  const handleAddNewBook = async () => {
+    const bookStructure = {
+      title: newBookTitle,
+      author: newBookAuthor,
+      isbn: newBookIsbn,
+    };
+
+    const db = firebase.firestore();
+    await db.collection("books").doc(uuidv4()).set(bookStructure);
+    alert("Book created!!");
+  };
+
   return (
     <div className="container">
       <Head>
@@ -155,6 +193,28 @@ export default function Home() {
           <>
             <h1 className="title">Book Directory</h1>
             <p className="description">Enter ISBN to lookup for the book</p>
+            <div>
+              <p className="description">New Book</p>
+              <input
+                type="text"
+                onChange={handleNewTitleInputChange}
+                value={newBookTitle}
+                placeholder="New Book Title"
+              />
+              <input
+                type="text"
+                onChange={handleNewAuthorInputChange}
+                value={newBookAuthor}
+                placeholder="New Book Author"
+              />
+              <input
+                type="text"
+                onChange={handleNewIsbnInputChange}
+                value={newBookIsbn}
+                placeholder="New Book Isbn"
+              />
+              <button onClick={handleAddNewBook}>Add new book</button>
+            </div>
             <div>
               <input
                 id="isbn-title"
