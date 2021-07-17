@@ -1,7 +1,5 @@
 import Head from "next/head";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useUser } from "../context/userContext";
+import { useState } from "react";
 import firebase from "../firebase/clientApp";
 
 export default function Home() {
@@ -10,22 +8,38 @@ export default function Home() {
   const [errorFetching, setErrorFetching] = useState(false);
   const [listOfBooks, setListOfBooks] = useState([]);
 
-  //fetch book module
-  const fetchBooks = async () => {
+  const [username, setUsername] = useState("");
+  const [password, setUPassword] = useState("");
+  const [authenticated, setAuthenticated] = useState(false);
+  const [errorAuthentication, setErrorAuthentication] = useState(false);
+
+  const authenticateUser = async () => {
     const db = firebase.firestore();
-    const results = await db.collection("books").doc(isbnInput).get();
+    const allUsers = await db.collection("profile").get();
 
-    if (results.exists) {
-      const data = results.data();
+    const data = [];
 
-      setErrorFetching(false);
-      setIndividualBook(data);
+    allUsers.forEach((item) => {
+      if (item.exists) {
+        const result = item.data();
 
-      // deconstructed object
-      // const { title, author, isbn } = data;
+        if (
+          result.name === username &&
+          result.password === password &&
+          result.admin === true
+        ) {
+          data.push({
+            ...result,
+          });
+        }
+      }
+    });
+
+    if (data.length > 0) {
+      setAuthenticated(true);
     } else {
-      setErrorFetching(true);
-      setIndividualBook(null);
+      setErrorAuthentication(true);
+      setAuthenticated(false);
     }
   };
 
@@ -76,16 +90,34 @@ export default function Home() {
     setIndividualBook(null);
   };
 
-  //onChange={(e) => handleInputChange(e) } --alt
   const handleInputChange = async (e) => {
     const value = e.target.value;
-    console.log(e.target);
 
     if (value === "" && errorFetching) {
       setErrorFetching(false);
     }
 
     setIsbnInput(value);
+  };
+
+  const handleUsernameInputChange = async (e) => {
+    const value = e.target.value;
+
+    if (errorAuthentication) {
+      setErrorAuthentication(false);
+    }
+
+    setUsername(value);
+  };
+
+  const handlePasswordInputChange = async (e) => {
+    const value = e.target.value;
+
+    if (errorAuthentication) {
+      setErrorAuthentication(false);
+    }
+
+    setUPassword(value);
   };
 
   const handleSubmit = () => {
@@ -100,44 +132,68 @@ export default function Home() {
       </Head>
 
       <main>
-        <h1 className="title">Book Directory</h1>
-        <p className="description">Enter ISBN to lookup for the book</p>
-        <div>
-          <input
-            id="isbn-title"
-            type="text"
-            onChange={handleInputChange}
-            value={isbnInput}
-          />
-        </div>
-        <button onClick={handleSubmit}>Get Books Information</button>
-        <button onClick={fetchAllBooks}>Get All Books</button>
-        <button onClick={clearAllBooks}>Clear list</button>
-        {individualBook !== null && (
-          //js
+        {!authenticated ? (
           <>
-            <p>{individualBook.title}</p>
-            <p>{individualBook.author}</p>
-            <p>{individualBook.isbn}</p>
+            <input
+              type="text"
+              onChange={handleUsernameInputChange}
+              value={username}
+              placeholder="Username"
+            />
+            <input
+              type="text"
+              onChange={handlePasswordInputChange}
+              value={password}
+              placeholder="Password"
+            />
+            <button onClick={authenticateUser}>Login</button>
+            {errorAuthentication && (
+              <p>Wrong username or password or not an admin</p>
+            )}
+          </>
+        ) : (
+          <>
+            <h1 className="title">Book Directory</h1>
+            <p className="description">Enter ISBN to lookup for the book</p>
+            <div>
+              <input
+                id="isbn-title"
+                type="text"
+                onChange={handleInputChange}
+                //onChange={(e) => handleInputChange(e) } --alt
+                value={isbnInput}
+              />
+            </div>
+            <button onClick={handleSubmit}>Get Books Information</button>
+            <button onClick={fetchAllBooks}>Get All Books</button>
+            <button onClick={clearAllBooks}>Clear list</button>
+            {individualBook !== null && (
+              //js
+              <>
+                <p>{individualBook.title}</p>
+                <p>{individualBook.author}</p>
+                <p>{individualBook.isbn}</p>
+              </>
+            )}
+            {listOfBooks.length > 0 && (
+              <>
+                <p> List of books</p>
+                {listOfBooks.map((item, index, isbn) => {
+                  return (
+                    <p key={index}>
+                      {index + 1}
+                      {". "}
+                      {item.isbn}
+                      {" | "}
+                      {item.title}
+                    </p>
+                  );
+                })}
+              </>
+            )}
+            {errorFetching && <p>There is an issue</p>}
           </>
         )}
-        {listOfBooks.length > 0 && (
-          <>
-            <p> List of books</p>
-            {listOfBooks.map((item, index, isbn) => {
-              return (
-                <p key={index}>
-                  {index + 1}
-                  {". "}
-                  {item.isbn}
-                  {" | "}
-                  {item.title}
-                </p>
-              );
-            })}
-          </>
-        )}
-        {errorFetching && <p>There is an issue</p>}
       </main>
 
       <style jsx>{`
